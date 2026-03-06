@@ -1,8 +1,10 @@
 // --- ADMINISTRATION PROFESSIONNELLE LONGRICH ---
 // "Normes : Sécurité, Performance, Données Réelles"
 
+const API_URL = 'https://script.google.com/macros/s/AKfycbzO471Itk4hSY9s0-9cjfJVdrIn8R_7oN-98kED-jZ0bugJjA3DVqlFgmHDQjjBEjfM4Q/exec';
+
 // 1. SÉCURITÉ & AUTHENTIFICATION
-// -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------- 
 const AUTH_KEY = 'longrich_admin_logged';
 const STORAGE_KEY_PRODUCTS = 'longrich_products';
 const STORAGE_KEY_SETTINGS = 'longrich_settings';
@@ -24,27 +26,39 @@ const STORAGE_KEY_STATS = 'longrich_stats';
 // 2. GESTION DES DONNÉES (CRUD)
 // -----------------------------------------------------------------------------
 
-// Récupérer les données
+// Charger depuis le cloud
+async function fetchCloudProducts() {
+    try {
+        const tbody = document.getElementById('products-table-body');
+        if(tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Chargement depuis Google Sheets... <i class="fas fa-spinner fa-spin"></i></td></tr>';
+
+        const response = await fetch(API_URL);
+        const products = await response.json();
+        
+        // Sauvegarde locale pour le dashboard
+        localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(products));
+        renderProductTable();
+        refreshStats();
+    } catch (error) {
+        console.error("Erreur chargement cloud", error);
+        alert("Erreur de connexion à Google Sheets");
+    }
+}
+
+// Récupérer les données locales
 function getData(key, defaultVal = []) {
     const data = localStorage.getItem(key);
     try {
         return data ? JSON.parse(data) : defaultVal;
     } catch (e) {
-        console.error("Erreur parsing JSON pour", key, e);
         return defaultVal;
     }
 }
 
 // Sauvegarder les données
 function saveData(key, data) {
-    try {
-        localStorage.setItem(key, JSON.stringify(data));
-        return true;
-    } catch (e) {
-        console.error("Erreur sauvegarde localStorage", e);
-        alert("Erreur de sauvegarde : Espace de stockage plein ?");
-        return false;
-    }
+    localStorage.setItem(key, JSON.stringify(data));
+    return true;
 }
 
 // 3. LOGIQUE DU DASHBOARD (AFFICHAGE)
@@ -56,25 +70,22 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initDashboard() {
+    fetchCloudProducts(); // Charger les vraies données immédiatement
     refreshStats();
-    renderProductTable();
+    // renderProductTable appelé par fetchCloudProducts
     fillSettingsForm();
-    setupVersionCheck();
 }
 
 function switchTab(tabId) {
-    // Gestionnaire d'onglets SPA (Single Page Application)
     document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.sidebar a').forEach(el => el.classList.remove('active'));
     
     const target = document.getElementById(tabId);
     if(target) target.classList.add('active');
     
-    // Active le lien dans la sidebar
     const link = document.querySelector(`a[onclick="switchTab('${tabId}')"]`);
     if(link) link.classList.add('active');
 
-    // Rafraîchir les données spécifiques
     if(tabId === 'dashboard') refreshStats();
 }
 
@@ -111,110 +122,88 @@ function renderProductTable() {
     });
 }
 
-function handleProductSubmit() {
-    try {
-        const name = document.getElementById('p_name').value.trim();
-        const price = document.getElementById('p_price').value;
-        const cat = document.getElementById('p_cat').value;  // AJOUT CATÉGORIE
-        const fileInput = document.getElementById('p_image_file');
-        const desc = document.getElementById('p_desc').value.trim();
+async function handleProductSubmit() {
+    const name = document.getElementById('p_name').value.trim();
+    const price = document.getElementById('p_price').value;
+    const cat = document.getElementById('p_cat').value; 
+    const desc = document.getElementById('p_desc').value.trim();
+    
+    // Récupérer l'URL de l'image ou utiliser une image par défaut
+    const urlInput = document.getElementById('p_image_url');
+    let imageUrl = urlInput && urlInput.value.trim() ? urlInput.value.trim() : "https://via.placeholder.com/400x300?text=" + encodeURIComponent(name);
 
-        if (!name || !price) {
-            alert("Le nom et le prix sont obligatoires.");
-            return;
-        }
-
-        // Fonction de traitement
-        const processProduct = (imageBase64) => {
-            let products = getData(STORAGE_KEY_PRODUCTS, []); // Default empty array, NO DEMO DATA
-            
-            const newProduct = {
-                id: Date.now(),
-                name: name,
-                price: parseInt(price),
-                category: cat || "Autre", 
-                image: imageBase64 || "https://via.placeholder.com/400x300?text=No+Image",
-                description: desc
-            };
-
-            products.push(newProduct);
-            if (saveData(STORAGE_KEY_PRODUCTS, products)) {
-                alert("Produit ajouté avec succès !");
-                document.getElementById('product-form').reset();
-                closeAddModal();
-                renderProductTable();
-                refreshStats();
-            } else {
-                alert("Impossible de sauvegarder le produit (stockage saturé ?)");
-            }
-        };
-
-        // Gestion de l'image optimisée (Redimensionnement pour éviter saturation localStorage)
-        if (fileInput.files && fileInput.files[0]) {
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                const img = new Image();
-                img.src = e.target.result;
-                
-                img.onload = function() {
-                    // Création du canvas pour redimensionner
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600; // Taille max raisonnable pour affichage web
-                    const MAX_HEIGHT = 600;
-                    let width = img.width;
-                    let height = img.height;
-
-                    // Calcul des nouvelles dimensions en gardant le ratio
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    // Compression en JPEG qualité 70% pour gagner de la place
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                    processProduct(compressedDataUrl);
-                };
-            };
-            
-            reader.onerror = function(err) {
-                console.error("Erreur lecture image", err);
-                alert("Erreur lors de la lecture de l'image.");
-            };
-            
-            reader.readAsDataURL(file);
-        } else {
-            // Pas d'image ou URL (si on gardait l'option URL)
-            processProduct(null);
-        }
-    } catch (error) {
-        console.error("Erreur critique dans handleProductSubmit", error);
-        alert("Une erreur inattendue est survenue : " + error.message);
+    if (!name || !price) {
+        alert("Nom et prix requis");
+        return;
     }
-}
 
-function deleteProduct(id) {
-    if (confirm("Confirmer la suppression définitive de ce produit ?")) {
+    const btn = document.querySelector('#product-form button');
+    if(btn) btn.innerText = "Envoi en cours...";
+
+    const newProduct = {
+        action: "add",
+        id: Date.now(),
+        name: name,
+        price: price,
+        category: cat,
+        image: imageUrl, 
+        description: desc
+    };
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Important pour Google Apps Script simple
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newProduct)
+        });
+        
+        // Avec no-cors on ne peut pas lire la réponse, on assume que ça marche
+        alert("Produit envoyé à Google Sheet !");
+        
+        // Mise à jour locale optimiste
         let products = getData(STORAGE_KEY_PRODUCTS, []);
-        products = products.filter(p => p.id !== id);
+        products.push(newProduct);
         saveData(STORAGE_KEY_PRODUCTS, products);
+        
+        document.getElementById('product-form').reset();
+        closeAddModal();
         renderProductTable();
         refreshStats();
+        
+        // Recharger le cloud après un court délai pour être sûr
+        setTimeout(fetchCloudProducts, 2000);
+
+    } catch (error) {
+        console.error("Erreur envoi", error);
+        alert("Erreur lors de l'envoi : " + error.message);
+    } finally {
+        if(btn) btn.innerText = "Sauvegarder";
     }
 }
+
+async function deleteProduct(id) {
+    if (!confirm("Supprimer ce produit de Google Sheet ?")) return;
+
+    // Optimiste : supprimer localement tout de suite
+    let products = getData(STORAGE_KEY_PRODUCTS, []);
+    products = products.filter(p => p.id != id);
+    saveData(STORAGE_KEY_PRODUCTS, products);
+    renderProductTable();
+
+    try {
+        await fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: "delete", id: id })
+        });
+        console.log("Ordre de suppression envoyé");
+    } catch (error) {
+        alert("Erreur réseau suppression");
+    }
+}
+
 
 // 5. MODULE STATISTIQUES & ANALYSE
 // -----------------------------------------------------------------------------
@@ -300,3 +289,4 @@ function setupVersionCheck() {
 // [CLEANED]
 
 // [CLEANED]
+
