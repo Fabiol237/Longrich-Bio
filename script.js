@@ -1,67 +1,18 @@
-﻿// --- CONFIGURATION SITES ---
-const DATA_VERSION = 'v1.4'; // Nouvelle version forcée
+// --- CONFIGURATION SITES ---
+const DATA_VERSION = 'v1.5'; // Mise à jour API
 
-const REAL_PRODUCTS = [
-    {
-        id: 101,
-        name: "Pâte Dentifrice Multi-Effets",
-        price: 3600,
-        category: "Hygiène",
-        description: "Protège les dents, combat la mauvaise haleine et blanchit naturellement.",
-        image: "https://images.unsplash.com/photo-1563170351-be82bc888aa4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-    },
-    {
-        id: 102,
-        name: "Savon Noir au Bambou",
-        price: 3000,
-        category: "Hygiène",
-        description: "Nettoie en profondeur, élimine l'acné et absorbe les impuretés.",
-        image: "https://images.unsplash.com/photo-1600607686527-6fb886090705?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-    },
-    {
-        id: 103,
-        name: "Serviettes Hygiéniques (Jour)",
-        price: 4000,
-        category: "Hygiène",
-        description: "Ultra-absorbantes, anti-bactériennes et confortables. Protège votre santé intime.",
-        image: "https://images.unsplash.com/photo-1608248597279-f99d160bfbc8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-    },
-    {
-        id: 104,
-        name: "Café Cordyceps Militaris",
-        price: 12000,
-        category: "Santé",
-        description: "Booste l'énergie, renforce l'immunité et améliore la vitalité.",
-        image: "https://images.unsplash.com/photo-1596436889106-be35e843f974?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-    },
-    {
-        id: 105,
-        name: "Gobelet Alcalin",
-        price: 30000,
-        category: "Santé",
-        description: "Transforme l'eau ordinaire en eau alcaline saine pour le corps.",
-        image: "https://images.unsplash.com/photo-1602143407151-11115cd4e69b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-    },
-    {
-        id: 106,
-        name: "Lait Corporel SOD",
-        price: 4500,
-        category: "Beauté",
-        description: "Hydrate, répare et protège la peau contre le vieillissement.",
-        image: "https://images.unsplash.com/photo-1556228720-191739c9bc11?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-    }
-];
+// LIEN API GOOGLE SCRIPT (Lecture & Écriture)
+const API_URL = 'https://script.google.com/macros/s/AKfycbzO471Itk4hSY9s0-9cjfJVdrIn8R_7oN-98kED-jZ0bugJjA3DVqlFgmHDQjjBEjfM4Q/exec';
+
+const REAL_PRODUCTS = []; // Obsolète
 
 function getSettings() {
     return JSON.parse(localStorage.getItem('longrich_settings')) || { currency: "FCFA" };
 }
 function initData() {
-    // Si pas de settings, créer
     if (!localStorage.getItem('longrich_settings')) {
         localStorage.setItem('longrich_settings', JSON.stringify({ currency: "FCFA" }));
     }
-    // Plus de données de démo - commencer avec une boutique vide
-    // Les produits seront ajoutés via le dashboard admin
 }
 
 function getProducts() {
@@ -72,7 +23,40 @@ function getProducts() {
 function renderProducts() {
     initData(); 
     renderFilteredProducts();
+    syncProductsFromCloud(); // Charge depuis l'API
 }
+
+// --- SYNC API CLOUD ---
+async function syncProductsFromCloud() {
+    if(!API_URL) return;
+    try {
+        console.log("Chargement API Cloud...");
+        const response = await fetch(API_URL); // Le doGet renvoie du JSON
+        const products = await response.json();
+        
+        if(products && Array.isArray(products)) {
+            // Normalisation des données
+            const cleanProducts = products.map(p => ({
+                id: p.id,
+                name: p.name,
+                price: parseInt(p.price) || 0,
+                category: p.category || "Autre",
+                image: p.image || "https://via.placeholder.com/400x300?text=Produit",
+                description: p.description || ""
+            }));
+
+            localStorage.setItem('longrich_products', JSON.stringify(cleanProducts));
+            console.log("✅ Produits synchronisés :", cleanProducts.length);
+            renderFilteredProducts();
+        }
+    } catch (e) {
+        console.error("Erreur sync API:", e);
+    }
+}
+
+// Ancienne fonction CSV supprimée car l'API renvoie du JSON propre
+
+
 
 
 
@@ -856,3 +840,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. Initialiser la page contact si necessaire
     initContactPage();
 });
+
+
+
