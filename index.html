@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Longrich Bio - Boutique Officielle</title>
+    <!-- Force le rechargement du style -->
+    <link rel="stylesheet" href="style.css?v=2001">
+    <!-- FontAwesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Loader pour montrer que quelque chose se passe */
+        #loader {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background:white; z-index:9999; display:flex; justify-content:center; align-items:center;
+            transition: opacity 0.5s;
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary, #2ecc71); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="loader"><div class="spinner"></div></div>
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const l = document.getElementById('loader');
+                if(l) { l.style.opacity = 0; setTimeout(() => l.remove(), 500); }
+            }, 800); // Petit délai pour l'effet
+        });
+    </script>
+
+    <!-- 1. Top Bar Promo (Contrôlable via Admin) -->
+    <div id="top-promo-bar" style="background: var(--dark); color: white; text-align: center; padding: 8px; font-size: 0.9rem; display:none;">
+        <span id="promo-text">Livraison gratuite dès 50.000 FCFA !</span>
+    </div>
+
+    <header>
+        <a href="index.html" class="logo" id="site-logo">Longrich <span>Bio</span></a>
+        <nav>
+            <ul>
+                <li><a href="index.html" class="active">Accueil</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="faq.html">FAQ</a></li>
+                <li>
+                    <a href="livraison.html" class="cart-btn">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-badge" id="cart-count">0</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Style direct pour forcer l'affichage de l'image (contourne le cache) -->
+    <section class="hero" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');">
+        <h1 id="hero-title">Bienvenue chez Longrich Bio</h1>
+        <p id="hero-tagline">Découvrez nos produits de santé et bien-être de qualité supérieure.</p>
+        <a href="#shop" class="btn-hero">Explorer la boutique <i class="fas fa-arrow-down"></i></a>
+    </section>
+
+    <!-- Section Avantages / Pourquoi nous choisir -->
+    <section class="features">
+        <div class="feature-item">
+            <i class="fas fa-leaf"></i>
+            <h3>100% Naturel</h3>
+            <p>Ingrédients bio certifiés</p>
+        </div>
+        <div class="feature-item">
+            <i class="fas fa-shipping-fast"></i>
+            <h3>Livraison Rapide</h3>
+            <p>Partout dans le pays</p>
+        </div>
+        <div class="feature-item">
+            <i class="fas fa-user-md"></i>
+            <h3>Expertise Santé</h3>
+            <p>Conseils professionnels</p>
+        </div>
+        <div class="feature-item">
+            <i class="fas fa-headset"></i>
+            <h3>Support 24/7</h3>
+            <p>Assistance client dédiée</p>
+        </div>
+    </section>
+
+    <!-- Section Meilleures Ventes supprimée selon demande -->
+
+    <div id="shop" class="container" style="position:relative;">
+        <h2 class="section-title">Nos Produits</h2>
+        
+        <!-- Barre de Recherche & Filtres -->
+        <div style="margin-bottom:30px; text-align:center;">
+            <div style="position:relative; display:inline-block; width:100%; max-width:500px;">
+                <input type="text" id="search-input" placeholder="Rechercher un produit (savon, dentifrice...)" 
+                    style="padding:15px; width:100%; border-radius:50px; border:1px solid #ddd; box-shadow:0 4px 10px rgba(0,0,0,0.05); font-size:1rem; outline:none;"
+                    oninput="showSuggestions()">
+                <div id="suggestions" style="position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1); max-height:200px; overflow-y:auto; display:none; z-index:1000;"></div>
+            </div>
+            
+            <div style="margin-top:15px; display:flex; gap:15px; justify-content:center; align-items:center; flex-wrap:wrap;">
+                <select id="sort-select" onchange="applySorting()" style="padding:10px 15px; border-radius:25px; border:1px solid #ddd; background:white; font-size:0.9rem; outline:none; cursor:pointer;">
+                    <option value="name">Trier par nom</option>
+                    <option value="price-asc">Prix croissant</option>
+                    <option value="price-desc">Prix décroissant</option>
+                </select>
+                
+                <div id="filter-buttons" style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="filter-btn active" onclick="filterByCat('Tout')">Tout</button>
+                    <button class="filter-btn" onclick="filterByCat('Santé')">Santé</button>
+                    <button class="filter-btn" onclick="filterByCat('Hygiène')">Hygiène</button>
+                    <button class="filter-btn" onclick="filterByCat('Beauté')">Beauté</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="products-grid" id="products-grid">
+            <!-- Les produits seront chargés ici par JS -->
+        </div>
+    </div>
+
+    <!-- Section "Rejoindre l'équipe" (Crucial pour le CRM Longrich) -->
+    <section id="opportunity" style="padding: 4rem 1rem; background: #f9f9f9; text-align: center; border-top: 1px solid #eee;">
+        <div style="max-width: 800px; margin: 0 auto;">
+            <h2 id="join-title" style="color: var(--dark); margin-bottom: 1rem;">Devenez Distributeur Partenaire</h2>
+            <p id="join-desc" style="color: #666; margin-bottom: 2rem; line-height: 1.6;">
+                Créez votre propre business et atteignez la liberté financière avec nous. Rejoignez une équipe dynamique et profitez de formations exclusives.
+            </p>
+            <a id="join-btn" href="#" class="cta-button btn-whatsapp" style="display: inline-block; padding: 12px 30px; background: var(--primary); color: white; text-decoration: none; border-radius: 5px; font-weight: bold; transition: transform 0.2s;">
+                <i class="fab fa-whatsapp"></i> Me Rejoindre
+            </a>
+            <p style="margin-top: 20px; font-size: 0.8rem; color: #999;">
+                * Note importante : Ce site est géré par un distributeur indépendant partenaire de Longrich. Nous ne sommes pas les détenteurs de la marque officielle, mais des revendeurs agréés.
+            </p>
+        </div>
+    </section>
+
+    <!-- 3. Pied de page dynamique -->
+    <footer style="background: var(--dark); color: white; padding: 3rem 1rem 1rem;">
+        <div class="footer-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto;">
+            <div class="footer-col">
+                <h3 id="footer-brand" style="color: var(--primary); margin-bottom: 1rem;">Longrich</h3>
+                <p id="footer-text" style="font-size: 0.9rem; opacity: 0.8;">Votre santé, notre priorité.</p>
+            </div>
+            <div class="footer-col">
+                <h3 style="margin-bottom: 1rem;">Liens Rapides</h3>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 0.5rem;"><a href="#" style="color: white; text-decoration: none; opacity: 0.8;">Accueil</a></li>
+                    <li style="margin-bottom: 0.5rem;"><a href="#products-grid" style="color: white; text-decoration: none; opacity: 0.8;">Produits</a></li>
+                    <li style="margin-bottom: 0.5rem;"><a href="#opportunity" style="color: white; text-decoration: none; opacity: 0.8;">Opportunité</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 style="margin-bottom: 1rem;">Contact</h3>
+                <div class="social-links" id="social-container" style="display: flex; gap: 1rem; font-size: 1.5rem;">
+                    <!-- Liens sociaux dynamiques injectés par JS -->
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom" style="text-align: center; margin-top: 3rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; opacity: 0.6;">
+            <p>&copy; <span id="year">2024</span> <span id="footer-copy">Longrich Admin</span>. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <!-- Floating WhatsApp Widget -->
+    <a href="#" id="wa-float" class="whatsapp-float" target="_blank">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Toast Notification -->
+    <div id="toast">Produit ajouté au panier ! 🛒</div>
+
+    <!-- MODAL DU PRODUIT (Ajouté dynamiquement) -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <div class="modal-body">
+                <div class="modal-img-wrapper">
+                    <img id="modal-img" src="" alt="Produit">
+                </div>
+                <div class="modal-details">
+                    <span class="modal-category">Longrich Bio</span>
+                    <h2 id="modal-title">Titre du Produit</h2>
+                    <div class="modal-price-row">
+                        <span id="modal-price">0 FCFA</span>
+                    </div>
+                    <div class="modal-divider"></div>
+                    <p id="modal-desc">Description du produit...</p>
+                    
+                    <div class="modal-actions">
+                        <div class="quantity-selector">
+                            <button type="button" onclick="adjustModalQty(-1)">-</button>
+                            <input type="number" id="modal-qty" value="1" min="1" readonly>
+                            <button type="button" onclick="adjustModalQty(1)">+</button>
+                        </div>
+                        <button id="modal-add-btn" class="modal-cta">
+                            <i class="fas fa-shopping-bag"></i> Ajouter au Panier
+                        </button>
+                    </div>
+                    
+                    <div class="modal-footer-info">
+                        <span><i class="fas fa-check-circle"></i> En stock</span>
+                        <span><i class="fas fa-truck"></i> Livraison rapide</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script principal -->
+    <script src="script.js?v=3002"></script>
+    <script>
+        // Force refresh if cached
+        console.log("Site Loaded v2001");
+    </script>
+</body>
+</html>

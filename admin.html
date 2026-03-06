@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longrich Admin Pro</title>
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="index.html" class="brand" title="Retour au site"><i class="fas fa-leaf"></i> Longrich <span>Pro</span></a>
+        
+        <ul class="nav-links">
+            <li><a href="#" class="active" onclick="switchTab('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="#" onclick="switchTab('products')"><i class="fas fa-box"></i> Produits</a></li>
+            <li><a href="#" onclick="switchTab('settings')"><i class="fas fa-cog"></i> Paramètres</a></li>
+        </ul>
+
+        <a href="index.html" class="logout"><i class="fas fa-sign-out-alt"></i> Retour au site</a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="header">
+            <h2 id="page-title">Tableau de Bord</h2>
+            <div class="user-info">
+                <span><i class="fas fa-user-circle"></i> Admin</span>
+            </div>
+        </header>
+
+        <!-- SECTION: DASHBOARD / ANALYSE -->
+        <div id="dashboard" class="section active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#3498db"><i class="fas fa-users"></i></div>
+                    <div class="stat-info">
+                        <h3>Actif</h3>
+                        <p>État du système</p>
+                    </div>
+                </div>
+                <!-- Statistique réelle connectée au JS -->
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#f1c40f"><i class="fas fa-box-open"></i></div>
+                    <div class="stat-info">
+                        <h3 id="stat-products-count">0</h3>
+                        <p>Produits en stock</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background:white; padding:40px; border-radius:12px; text-align:center; margin-top:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                <i class="fas fa-shield-alt" style="font-size:3rem; color:#2ecc71; margin-bottom:15px;"></i>
+                <h3>Interface Administrateur Sécurisée</h3>
+                <p style="color:#7f8c8d; max-width:600px; margin:0 auto;">
+                    Vous êtes connecté au panneau de contrôle principal. Ajoutez des produits et configurez votre boutique. 
+                    Toutes les modifications sont appliquées en temps réel sur le site client.
+                </p>
+            </div>
+        </div>
+
+        <!-- SECTION: GESTION PRODUITS -->
+        <div id="products" class="section">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3>Bibliothèque de Produits</h3>
+                <button class="btn" onclick="openAddModal()"><i class="fas fa-plus"></i> Nouveau Produit</button>
+            </div>
+
+            <!-- Formulaire d'ajout (Caché par défaut ou dans une modale, ici inline pour simplifier) -->
+            <div id="add-product-panel" class="form-container" style="display:none; margin-bottom:20px;">
+                <h4>Ajouter / Modifier un produit</h4>
+                <form id="product-form">
+                    <div class="form-group">
+                        <label>Nom du produit</label>
+                        <input type="text" id="p_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Prix (FCFA)</label>
+                        <input type="number" id="p_price" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Catégorie</label>
+                        <select id="p_cat" required style="width:100%; padding:10px; margin-top:5px; border:1px solid #ddd; border-radius:5px;">
+                            <option value="Santé">Santé & Bien-être</option>
+                            <option value="Hygiène">Hygiène Personnelle</option>
+                            <option value="Beauté">Beauté & Cosmétique</option>
+                            <option value="Accessoires">Accessoires & Équipements</option>
+                            <option value="Boissons">Thés & Boissons</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Image du produit (Fichier)</label>
+                        <input type="file" id="p_image_file" accept="image/*">
+                        <small style="color:#7f8c8d">Sélectionnez une image depuis votre appareil (optionnel).</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="p_desc" rows="3"></textarea>
+                    </div>
+                    <button type="button" class="btn" onclick="handleProductSubmit()">Enregistrer le produit</button>
+                    <button type="button" class="btn btn-danger" onclick="closeAddModal()">Annuler</button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Img</th>
+                            <th>Nom</th>
+                            <th>Prix</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table-body">
+                        <!-- Rempli par JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- SECTION: PARAMÈTRES (15 Paramètres Avancés) -->
+        <div id="settings" class="section">
+            <h3>Configuration Complète de la Boutique</h3>
+            <div class="form-container">
+                <form id="settings-form" onsubmit="saveSettings(event)" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    
+                    <!-- Branding & Identité -->
+                    <div class="form-group">
+                        <label>1. Nom du Site</label>
+                        <input type="text" id="s_site_name" placeholder="Ex: Longrich Cameroun">
+                    </div>
+                    <div class="form-group">
+                        <label>2. Slogan / Sous-titre</label>
+                        <input type="text" id="s_tagline" placeholder="Ex: La santé au naturel">
+                    </div>
+                    <div class="form-group">
+                        <label>3. Couleur Principale (Thème)</label>
+                        <input type="color" id="s_primary_color" value="#2ecc71" style="height:40px; width:100%;">
+                    </div>
+                    <div class="form-group">
+                        <label>4. Devise</label>
+                        <select id="s_currency">
+                            <option value="FCFA">FCFA (XAF)</option>
+                            <option value="$">US Dollar ($)</option>
+                            <option value="€">Euro (€)</option>
+                        </select>
+                    </div>
+
+                    <!-- Contact & Réseaux -->
+                    <div class="form-group">
+                        <label>5. WhatsApp (Commandes)</label>
+                        <input type="text" id="s_whatsapp" placeholder="Ex: 237699xxxxxx">
+                    </div>
+                    <div class="form-group">
+                        <label>6. Email Contact</label>
+                        <input type="email" id="s_email" placeholder="contact@monsite.com">
+                    </div>
+                    <div class="form-group">
+                        <label>7. Lien Facebook</label>
+                        <input type="url" id="s_facebook" placeholder="https://facebook.com/...">
+                    </div>
+                    <div class="form-group">
+                        <label>8. Lien Instagram</label>
+                        <input type="url" id="s_instagram" placeholder="https://instagram.com/...">
+                    </div>
+
+                    <!-- Logistique -->
+                    <div class="form-group">
+                        <label>9. Frais de Livraison (FCFA)</label>
+                        <input type="number" id="s_delivery_fee" placeholder="Ex: 1000">
+                    </div>
+                    <div class="form-group">
+                        <label>10. Livraison Gratuite à partir de</label>
+                        <input type="number" id="s_free_shipping" placeholder="Ex: 50000">
+                    </div>
+                    <div class="form-group">
+                        <label>11. Délai de livraison estimé</label>
+                        <input type="text" id="s_delivery_time" placeholder="Ex: 24h - 48h">
+                    </div>
+                    <div class="form-group">
+                        <label>12. Lieu / Ville de base</label>
+                        <input type="text" id="s_location" placeholder="Ex: Douala, Cameroun">
+                    </div>
+
+                    <!-- Contenu Home -->
+                    <div class="form-group" style="grid-column:span 2">
+                        <label>13. Titre Grand Écran (Hero)</label>
+                        <input type="text" id="s_hero_title" placeholder="Ex: Bienvenue chez Longrich Bio">
+                    </div>
+                    <div class="form-group" style="grid-column:span 2">
+                        <label>14. Message Promo (Barre du haut)</label>
+                        <input type="text" id="s_promo_bar" placeholder="Ex: Promo spéciale -20% ce mois !">
+                    </div>
+                    <div class="form-group" style="grid-column:span 2">
+                        <label>15. Texte Pied de Page (Copyright)</label>
+                        <input type="text" id="s_footer_text" placeholder="Ex: © 2024 Longrich Bio. Tous droits réservés.">
+                    </div>
+
+                    <button type="submit" class="btn" style="grid-column:span 2; margin-top:10px;">Enregistrer Tous les Paramètres</button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="admin.js?v=TIMESTAMP_NOW"></script>
+</body>
+</html>
