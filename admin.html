@@ -92,9 +92,10 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Image du produit (Fichier)</label>
-                        <input type="file" id="p_image_file" accept="image/*">
-                        <small style="color:#7f8c8d">Sélectionnez une image depuis votre appareil (optionnel).</small>
+                        <label>Lien de l'image (Conseillé)</label>
+                        <input type="text" id="p_image_url" placeholder="https://..." style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                        <input type="hidden" id="p_image_file"> <!-- Désactivé pour le cloud -->
+                        <small style="color:#7f8c8d">Collez le lien d'une image (ex: unsplash.com).</small>
                     </div>
                     <div class="form-group">
                         <label>Description</label>
@@ -211,3 +212,4 @@
     <script src="admin.js?v=TIMESTAMP_NOW"></script>
 </body>
 </html>
+
